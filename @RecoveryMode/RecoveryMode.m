@@ -107,8 +107,8 @@ classdef RecoveryMode < FeasibilityDrivenBase & handle
             obj.b_kinematic_constr = [obj.kin_multiplier * state.sf_pos_ss(1,1) + obj.kin_constr_buffer; ...
                                       - obj.kin_multiplier * state.sf_pos_ss(1,1) + obj.kin_constr_buffer];
              
-            obj.b_zmp_constr_toe(1 : obj.input.scheme_parameters.C, 1) = - state.x(3,1) + obj.input.scheme_parameters.d_zt + obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1) + obj.input.footstep_plan.mapping(:, 2) * obj.input.scheme_parameters.dist_toe; 
-            obj.b_zmp_constr_toe(obj.input.scheme_parameters.C + 1 : 2 * obj.input.scheme_parameters.C, 1) = + state.x(3,1) + obj.input.scheme_parameters.d_zt - obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1) +  obj.input.footstep_plan.mapping(:, 2) * obj.input.scheme_parameters.dist_toe;                                
+            obj.b_zmp_constr_toe(1 : obj.input.scheme_parameters.C, 1) = - state.x(3,1) + obj.input.scheme_parameters.d_zt / 2 + obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1) + obj.input.footstep_plan.mapping(:, 1) * obj.input.scheme_parameters.dist_toe; 
+            obj.b_zmp_constr_toe(obj.input.scheme_parameters.C + 1 : 2 * obj.input.scheme_parameters.C, 1) = + state.x(3,1) + obj.input.scheme_parameters.d_zt / 2 - obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1) +  obj.input.footstep_plan.mapping(:, 1) * obj.input.scheme_parameters.dist_toe;                                
             
             obj.b_zmp_constr(1 : obj.input.scheme_parameters.C, 1) = - state.x(3,1) + obj.input.scheme_parameters.d_zxf + obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1); 
             obj.b_zmp_constr(obj.input.scheme_parameters.C + 1 : 2 * obj.input.scheme_parameters.C, 1) = + state.x(3,1) + obj.input.scheme_parameters.d_zxb - obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1);                                 
@@ -128,17 +128,18 @@ classdef RecoveryMode < FeasibilityDrivenBase & handle
                obj.b_eq_ds(1,1) = obj.b_stab_constr;
                obj.b_eq_ds(2,1) = obj.input.footstep_plan.positions(state.footstep_counter_rm, 1);           
                solution = quadprog(obj.H, obj.f, obj.A_ineq, obj.b_ineq, obj.A_eq_ds, obj.b_eq_ds, [], [], [], obj.options);
-            elseif (obj.index <= obj.input.footstep_plan.ds_samples + obj.input.footstep_plan.dds_samples) && (obj.index > obj.input.footstep_plan.ds_samples)
-               obj.A_ineq = [obj.A_zmp_constr_toe];
-               obj.b_ineq = [obj.b_zmp_constr_toe];                
-               obj.A_eq_ss = obj.A_stab_constr;   
-               obj.b_eq_ss = obj.b_stab_constr;             
-               solution = quadprog(obj.H, obj.f, obj.A_ineq, obj.b_ineq, obj.A_eq_ss, obj.b_eq_ss, [], [], [], obj.options);  
+%             elseif (obj.index <= obj.input.footstep_plan.ds_samples + obj.input.footstep_plan.dds_samples) && (obj.index > obj.input.footstep_plan.ds_samples)
+%                obj.A_ineq = [obj.A_zmp_constr_toe];
+%                obj.b_ineq = [obj.b_zmp_constr_toe];                
+%                obj.A_eq_ss = obj.A_stab_constr;   
+%                obj.b_eq_ss = obj.b_stab_constr;             
+%                solution = quadprog(obj.H, obj.f, obj.A_ineq, obj.b_ineq, obj.A_eq_ss, obj.b_eq_ss, [], [], [], obj.options);  
             else
-               obj.A_ineq = [obj.A_zmp_constr_toe; obj.A_kinematic_constr];
-               obj.b_ineq = [obj.b_zmp_constr_toe; obj.b_kinematic_constr];                
+               obj.A_ineq = [obj.A_zmp_constr; obj.A_kinematic_constr];
+               obj.b_ineq = [obj.b_zmp_constr; obj.b_kinematic_constr];                
                obj.A_eq_ss = obj.A_stab_constr;   
-               obj.b_eq_ss = obj.b_stab_constr;  
+               obj.b_eq_ss = obj.b_stab_constr; 
+               solution = quadprog(obj.H, obj.f, obj.A_ineq, obj.b_ineq, obj.A_eq_ss, obj.b_eq_ss, [], [], [], obj.options);
             end
             if isempty(solution)
                 stop = 'stop';

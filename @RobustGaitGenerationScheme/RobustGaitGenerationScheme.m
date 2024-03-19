@@ -173,35 +173,28 @@ classdef RobustGaitGenerationScheme < handle
              for i = 1 : obj.input.scheme_parameters.F + 1
                  
                  obj.ss_samples = round( (obj.input.footstep_plan.timings(i + 1, 1) - obj.input.footstep_plan.timings(i, 1)) / obj.input.scheme_parameters.delta ) - ...
-                                  obj.input.footstep_plan.ds_samples - obj.input.footstep_plan.dds_samples;
+                                  obj.input.footstep_plan.ds_samples;
                  obj.centerline_temp_x{i} = [obj.steps_in_horizon(i, 1) + (obj.steps_in_horizon(i + 1, 1) - obj.steps_in_horizon(i, 1)) * ...
                                             (1 : obj.input.footstep_plan.ds_samples )' / obj.input.footstep_plan.ds_samples; ...
                                             obj.steps_in_horizon(i + 1, 1) * ones(obj.ss_samples ,1)];
                  obj.centerline_temp_y{i} = [obj.steps_in_horizon(i, 2) + (obj.steps_in_horizon(i + 1, 2) - obj.steps_in_horizon(i, 2)) * ...
                                             (1 : obj.input.footstep_plan.ds_samples )' / obj.input.footstep_plan.ds_samples; ...
-                                            obj.steps_in_horizon(i + 1, 2) * ones(obj.ss_samples ,1)];
-                                        
-                 obj.centerline_temp_temp_x(time_counter : time_counter + obj.ss_samples + obj.input.footstep_plan.ds_samples  - 1, 1) = obj.centerline_temp_x{i};
-                 obj.centerline_temp_temp_y(time_counter : time_counter + obj.ss_samples + obj.input.footstep_plan.ds_samples  - 1, 1) = obj.centerline_temp_y{i};                  
+                                            obj.steps_in_horizon(i + 1, 2) * ones(obj.ss_samples ,1)]; 
+                 
+                 obj.centerline_temp_temp_x(time_counter : time_counter + obj.ss_samples + obj.input.footstep_plan.ds_samples - 1, 1) = obj.centerline_temp_x{i};                    
+                 obj.centerline_temp_temp_y(time_counter : time_counter + obj.ss_samples + obj.input.footstep_plan.ds_samples - 1, 1) = obj.centerline_temp_y{i};                  
                  
                  if index <= obj.input.footstep_plan.ds_samples
-                     obj.mapping_buffer(time_counter : time_counter + obj.ss_samples + obj.input.footstep_plan.ds_samples + obj.input.footstep_plan.dds_samples - 1, i + 1) = ...
-                                                                                         [(0 : obj.input.footstep_plan.ds_samples - 1)' / obj.input.footstep_plan.ds_samples; ...
-                                                                                          (0 : obj.input.footstep_plan.dds_samples - 1)' / obj.input.footstep_plan.dds_samples; ...
-                                                                                         ones(obj.ss_samples ,1)];
-                     obj.mapping_buffer(time_counter : time_counter + obj.input.footstep_plan.ds_samples - 1, i) = flip((1 : obj.input.footstep_plan.ds_samples )' / obj.input.footstep_plan.ds_samples);
-                 elseif (index <= obj.input.footstep_plan.dds_samples + obj.input.footstep_plan.ds_samples) && (index > obj.input.footstep_plan.ds_samples)
-                     obj.mapping_buffer(time_counter + obj.input.footstep_plan.ds_samples : time_counter + obj.ss_samples + obj.input.footstep_plan.ds_samples + obj.input.footstep_plan.dds_samples - 1, i + 1) = [(0 : obj.input.footstep_plan.dds_samples - 1)' / obj.input.footstep_plan.dds_samples; ...
+                     obj.mapping_buffer(time_counter : time_counter + obj.ss_samples + obj.input.footstep_plan.ds_samples - 1, i + 1) = [(0 : obj.input.footstep_plan.ds_samples - 1)' / obj.input.footstep_plan.ds_samples; ...
                                                                                                                                         ones(obj.ss_samples ,1)];
-                     obj.mapping_buffer(time_counter + obj.input.footstep_plan.ds_samples : time_counter + obj.input.footstep_plan.ds_samples + obj.input.footstep_plan.dds_samples - 1, i) = flip((1 : obj.input.footstep_plan.dds_samples )' / obj.input.footstep_plan.dds_samples);                   
+                     obj.mapping_buffer(time_counter : time_counter + obj.input.footstep_plan.ds_samples - 1, i) = flip((1 : obj.input.footstep_plan.ds_samples )' / obj.input.footstep_plan.ds_samples);
                  else
                      obj.mapping_buffer(time_counter : time_counter + obj.ss_samples + obj.input.footstep_plan.ds_samples - 1, i) = [ones(obj.ss_samples ,1); ...
                                                                                                                                      flip((1 : obj.input.footstep_plan.ds_samples )' / obj.input.footstep_plan.ds_samples)];
-                     obj.mapping_buffer(time_counter + obj.ss_samples : time_counter + obj.ss_samples + obj.input.footstep_plan.ds_samples + obj.input.footstep_plan.dds_samples - 1, i + 1) = [(0 : obj.input.footstep_plan.ds_samples - 1)' / obj.input.footstep_plan.ds_samples; ...
-                                                                                                                                                                                                (0 : obj.input.footstep_plan.dds_samples - 1)' / obj.input.footstep_plan.dds_samples];
+                     obj.mapping_buffer(time_counter + obj.ss_samples : time_counter + obj.ss_samples + obj.input.footstep_plan.ds_samples - 1, i + 1) = (0 : obj.input.footstep_plan.ds_samples - 1)' / obj.input.footstep_plan.ds_samples;
                  end
                  
-                 time_counter = time_counter + obj.ss_samples + obj.input.footstep_plan.ds_samples + obj.input.footstep_plan.dds_samples;
+                 time_counter = time_counter + obj.ss_samples + obj.input.footstep_plan.ds_samples;
                  
                  
              end
@@ -213,10 +206,8 @@ classdef RobustGaitGenerationScheme < handle
              obj.input.footstep_plan.tail_y = obj.centerline_temp_temp_y(index + obj.input.scheme_parameters.C: index + obj.input.scheme_parameters.P - 1, 1);                                                                                                
              if index <= obj.input.footstep_plan.ds_samples
                  obj.input.footstep_plan.mapping = obj.mapping_buffer(index : index + obj.input.scheme_parameters.C - 1, 1 : obj.input.scheme_parameters.M + 1);
-             elseif (index <= obj.input.footstep_plan.dds_samples + obj.input.footstep_plan.ds_samples) && (index > obj.input.footstep_plan.ds_samples)
-                 obj.input.footstep_plan.mapping = obj.mapping_buffer(index - obj.input.footstep_plan.ds_samples : index + obj.input.scheme_parameters.C - 1 - obj.input.footstep_plan.ds_samples, 1 : obj.input.scheme_parameters.M + 1);                 
              else
-                 obj.input.footstep_plan.mapping = obj.mapping_buffer(index - obj.input.footstep_plan.ds_samples - obj.input.footstep_plan.dds_samples : index + obj.input.scheme_parameters.C - 1 - obj.input.footstep_plan.ds_samples - obj.input.footstep_plan.dds_samples, 1 : obj.input.scheme_parameters.M + 1);
+                 obj.input.footstep_plan.mapping = obj.mapping_buffer(index - obj.input.footstep_plan.ds_samples : index + obj.input.scheme_parameters.C - 1 - obj.input.footstep_plan.ds_samples, 1 : obj.input.scheme_parameters.M + 1);                 
              end
         end
         
@@ -284,10 +275,8 @@ classdef RobustGaitGenerationScheme < handle
         % buffers
         steps_in_horizon;
         centerline_temp_x;
-        centerline_temp_xt;
         centerline_temp_y;
         centerline_temp_temp_x;
-        centerline_temp_temp_xt;
         centerline_temp_temp_y;      
         ss_samples;
         mapping_buffer;
