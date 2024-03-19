@@ -16,7 +16,7 @@ input = struct;
 
 % parameters of the scheme
 input.scheme_parameters = struct;
-input.scheme_parameters.delta = 0.01; % sampling time
+input.scheme_parameters.delta = 0.005; % sampling time
 input.scheme_parameters.h = 0.78; % CoM height for LIP model
 input.scheme_parameters.g = 9.81; % gravity acceleration constant
 input.scheme_parameters.eta = sqrt(input.scheme_parameters.g / input.scheme_parameters.h);
@@ -73,9 +73,8 @@ input.footstep_plan.timings = zeros(input.footstep_plan.total_step_number + 4,1)
 input.footstep_plan.running_steps = zeros(input.footstep_plan.total_step_number + 4,1);
 input.footstep_plan.ds_duration = 0.3 * TimeStep; % it is convenient to set a fixed duration for the double support
                                        % this can still be modified by the Step Timing Adaptation module
-input.footstep_plan.dds_duration = 0.2 * TimeStep;                                       
-input.footstep_plan.ds_samples = floor(input.footstep_plan.ds_duration / input.scheme_parameters.delta);
-input.footstep_plan.dds_samples = floor(input.footstep_plan.dds_duration / input.scheme_parameters.delta);
+input.footstep_plan.ds_duration = 0.3 * TimeStep;                                       
+input.footstep_plan.ds_samples = floor(input.footstep_plan.ds_duration / input.scheme_parameters.delta);                                       
 input.footstep_plan.starting_sf = "right";
 input.footstep_plan.tail_x = zeros(input.scheme_parameters.P - input.scheme_parameters.C, 1);
 input.footstep_plan.tail_y = zeros(input.scheme_parameters.P - input.scheme_parameters.C, 1);

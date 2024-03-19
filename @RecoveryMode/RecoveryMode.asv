@@ -121,7 +121,8 @@ classdef RecoveryMode < FeasibilityDrivenBase & handle
             obj.f(obj.input.scheme_parameters.C+1 : obj.input.scheme_parameters.C + obj.input.scheme_parameters.M, 1) = ...
                     - obj.footstep_weight * obj.input.footstep_plan.positions(state.footstep_counter_rm : state.footstep_counter_rm + obj.input.scheme_parameters.M - 1, 1);
                                      
-                   
+               
+               
             if obj.index <= obj.input.footstep_plan.ds_samples 
                obj.A_ineq = obj.A_zmp_constr;
                obj.b_ineq = obj.b_zmp_constr; 

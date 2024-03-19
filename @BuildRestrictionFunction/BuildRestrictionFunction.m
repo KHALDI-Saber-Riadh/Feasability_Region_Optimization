@@ -6,7 +6,7 @@ classdef BuildRestrictionFunction < handle
             
             obj.input = input;
             costFunction = @(x) x(1)^2 + (x(2) - obj.input.scheme_parameters.T_c)^2;            
-            x0 = [obj.input.scheme_parameters.d_z / (2.0 * obj.input.scheme_parameters.T_c), ...
+            x0 = [(obj.input.scheme_parameters.d_zxf + input.scheme_parameters.d_zxb) / (2.0 * obj.input.scheme_parameters.T_c), ...
                   obj.input.scheme_parameters.T_c];
               
             obj.input.scheme_parameters.gamma_max = (2 * obj.input.scheme_parameters.dist_range(1,1) / obj.input.scheme_parameters.eta ^ 2) * ...
@@ -14,8 +14,8 @@ classdef BuildRestrictionFunction < handle
                                                     * (1 + obj.input.scheme_parameters.alpha);
             nlcon = @(x) constraintFunction (obj, x);                               
             x = fmincon(costFunction, x0, [], [], [], [], [], [], nlcon);
-            obj.restriction_x = zeros(obj.input.scheme_parameters.T_c / obj.input.scheme_parameters.delta, 1);
-            for  i = 1 : (obj.input.scheme_parameters.T_c / obj.input.scheme_parameters.delta) - 1
+            obj.restriction_x = zeros(obj.input.scheme_parameters.C, 1);
+            for  i = 1 : (obj.input.scheme_parameters.C) - 1
                 if i * obj.input.scheme_parameters.delta < x(2)
                     obj.restriction_x(i+1) = x(1) * (i * obj.input.scheme_parameters.delta - obj.input.scheme_parameters.delta);
                 else
@@ -28,8 +28,8 @@ classdef BuildRestrictionFunction < handle
                                                     * (1 + obj.input.scheme_parameters.alpha);
             nlcon = @(x) constraintFunction (obj, x);                                  
             x = fmincon(costFunction, x0, [], [], [], [], [], [], nlcon);
-            obj.restriction_y = zeros(obj.input.scheme_parameters.T_c / obj.input.scheme_parameters.delta, 1);
-            for  i = 1 : (obj.input.scheme_parameters.T_c / obj.input.scheme_parameters.delta) - 1
+            obj.restriction_y = zeros(obj.input.scheme_parameters.C, 1);
+            for  i = 1 : (obj.input.scheme_parameters.C) - 1
                 if i * obj.input.scheme_parameters.delta < x(2)
                     obj.restriction_y(i+1) = x(1) * (i * obj.input.scheme_parameters.delta - obj.input.scheme_parameters.delta);
                 else
@@ -65,7 +65,7 @@ classdef BuildRestrictionFunction < handle
         function [c,ceq] = constraintFunction(obj, x)
 
             c =  [-x(1); ...
-                 x(1)*(x(2) - obj.input.scheme_parameters.delta) - obj.input.scheme_parameters.d_z / 2.0 + obj.input.scheme_parameters.epsilon];
+                 x(1)*(x(2) - obj.input.scheme_parameters.delta) - (obj.input.scheme_parameters.d_zxf + obj.input.scheme_parameters.d_zxb) / 2.0 + obj.input.scheme_parameters.epsilon];
             ceq = [(x(1) / obj.input.scheme_parameters.eta) * (exp(- obj.input.scheme_parameters.eta * obj.input.scheme_parameters.delta) - 1) * ...
                    ((obj.input.scheme_parameters.eta * (obj.input.scheme_parameters.delta - x(2) -1))*exp(- obj.input.scheme_parameters.eta*x(2)) - 1)  + ...
                    x(1) * (x(2) - obj.input.scheme_parameters.delta) * (exp(obj.input.scheme_parameters.eta * obj.input.scheme_parameters.delta) - 1) * ...
