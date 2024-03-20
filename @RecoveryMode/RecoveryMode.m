@@ -128,12 +128,12 @@ classdef RecoveryMode < FeasibilityDrivenBase & handle
                obj.b_eq_ds(1,1) = obj.b_stab_constr;
                obj.b_eq_ds(2,1) = obj.input.footstep_plan.positions(state.footstep_counter_rm, 1);           
                solution = quadprog(obj.H, obj.f, obj.A_ineq, obj.b_ineq, obj.A_eq_ds, obj.b_eq_ds, [], [], [], obj.options);
-%             elseif (obj.index <= obj.input.footstep_plan.ds_samples + obj.input.footstep_plan.dds_samples) && (obj.index > obj.input.footstep_plan.ds_samples)
-%                obj.A_ineq = [obj.A_zmp_constr_toe];
-%                obj.b_ineq = [obj.b_zmp_constr_toe];                
-%                obj.A_eq_ss = obj.A_stab_constr;   
-%                obj.b_eq_ss = obj.b_stab_constr;             
-%                solution = quadprog(obj.H, obj.f, obj.A_ineq, obj.b_ineq, obj.A_eq_ss, obj.b_eq_ss, [], [], [], obj.options);  
+            elseif (obj.index <= obj.input.footstep_plan.ds_samples + obj.input.footstep_plan.dds_samples) && (obj.index > obj.input.footstep_plan.ds_samples)
+               obj.A_ineq = [obj.A_zmp_constr_toe];
+               obj.b_ineq = [obj.b_zmp_constr_toe];                
+               obj.A_eq_ss = obj.A_stab_constr;   
+               obj.b_eq_ss = obj.b_stab_constr;             
+               solution = quadprog(obj.H, obj.f, obj.A_ineq, obj.b_ineq, obj.A_eq_ss, obj.b_eq_ss, [], [], [], obj.options);  
             else
                obj.A_ineq = [obj.A_zmp_constr; obj.A_kinematic_constr];
                obj.b_ineq = [obj.b_zmp_constr; obj.b_kinematic_constr];                
