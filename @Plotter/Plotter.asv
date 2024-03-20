@@ -40,12 +40,9 @@ classdef Plotter < handle
                              -0.09-obj.input.scheme_parameters.d_zy / 2, ...
                              0.09+obj.input.scheme_parameters.d_zy / 2, ...
                              0.09+obj.input.scheme_parameters.d_zy / 2];
-           obj.circle = struct;
            obj.circle.radius = 0.01;
            obj.circle.center = [0, 0];
-           theta = linspace(0, 2*pi, 100);
-           obj.circle.X = obj.circle.radius * cos(theta) + obj.circle.center(1);
-           obj.circle.Y = obj.circle.radius * sin(theta) + obj.circle.center(2);
+           theta = linspace(0, 2*p
         end
         
         function obj = plotLogs(obj, logs, state)
@@ -148,7 +145,7 @@ classdef Plotter < handle
                 for i = 2 : ct
                     c = plot(obj.rectangle(1,:) + logs.actual_footsteps(1,i), obj.rectangle(2,:) + logs.actual_footsteps(2,i), 'm','Linewidth',2, 'Handlevisibility', 'off');
                     c_toe = plot(obj.rectangle_toe(1,:) + logs.actual_footsteps(1,i) + obj.dist_toe, obj.rectangle_toe(2,:) + logs.actual_footsteps(2,i), 'm','Linewidth',2, 'Handlevisibility', 'off');
-                    c_link = plot(logs.actual_footsteps(1,i) + obj.circle.X, logs.actual_footsteps(2,i) + obj.circle.Y, 'k','Linewidth',2, 'Handlevisibility', 'off');
+                    c_link = 
                 end
             end
             
