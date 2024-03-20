@@ -262,6 +262,10 @@ end
 %
 %% CONTROLLER & SIMULATION STOP OPERATING HERE
 
+zmp = logs.x_store(3,:);
+com = logs.x_store(1,:);
+
+sum(abs(zmp(2:end)' - zmp(1:end-1)'))
 %% plot the logs at a certain time 
 for t_k = 0.1:0.1:8.0
     plotter.plotLogsAtTimeK(logs, state, floor(t_k / simulation_parameters.delta));
