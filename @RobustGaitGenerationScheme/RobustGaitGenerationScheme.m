@@ -186,7 +186,8 @@ classdef RobustGaitGenerationScheme < handle
                  
                  if index <= obj.input.footstep_plan.ds_samples
                      obj.mapping_buffer(time_counter : time_counter + obj.input.footstep_plan.ds_samples - 1, i + 1) = (0 : obj.input.footstep_plan.ds_samples - 1)' / obj.input.footstep_plan.ds_samples;
-                     obj.mapping_buffer(time_counter : time_counter + obj.input.footstep_plan.ds_samples - 1, i) = flip((1 : obj.input.footstep_plan.ds_samples )' / obj.input.footstep_plan.ds_samples);
+                     obj.mapping_buffer(time_counter : time_counter + obj.input.footstep_plan.ds_samples + obj.ss_samples - 1, i) = [flip((1 : obj.input.footstep_plan.ds_samples )' / obj.input.footstep_plan.ds_samples); ...
+                         ones(obj.ss_samples, 1)];
                  elseif (index > obj.input.footstep_plan.ds_samples) && (index <= obj.input.footstep_plan.ds_samples + obj.input.footstep_plan.dds_samples)
                      obj.mapping_buffer(time_counter : time_counter + obj.ss_samples + obj.input.footstep_plan.dds_samples - 1, i + 1) = [(0 : obj.input.footstep_plan.dds_samples - 1)' / obj.input.footstep_plan.dds_samples; ...
                                                                                                                                            ones(obj.ss_samples ,1)];                                        

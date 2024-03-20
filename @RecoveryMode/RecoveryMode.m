@@ -108,7 +108,7 @@ classdef RecoveryMode < FeasibilityDrivenBase & handle
                                       - obj.kin_multiplier * state.sf_pos_ss(1,1) + obj.kin_constr_buffer];
              
             obj.b_zmp_constr_toe(1 : obj.input.scheme_parameters.C, 1) = - state.x(3,1) + obj.input.scheme_parameters.d_zt / 2 + obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1) + obj.input.footstep_plan.mapping(:, 1) * obj.input.scheme_parameters.dist_toe; 
-            obj.b_zmp_constr_toe(obj.input.scheme_parameters.C + 1 : 2 * obj.input.scheme_parameters.C, 1) = + state.x(3,1) + obj.input.scheme_parameters.d_zt / 2 - obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1) +  obj.input.footstep_plan.mapping(:, 1) * obj.input.scheme_parameters.dist_toe;                                
+            obj.b_zmp_constr_toe(obj.input.scheme_parameters.C + 1 : 2 * obj.input.scheme_parameters.C, 1) = + state.x(3,1) + obj.input.scheme_parameters.d_zt / 2 - obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1) -  obj.input.footstep_plan.mapping(:, 1) * obj.input.scheme_parameters.dist_toe;                                
             
             obj.b_zmp_constr(1 : obj.input.scheme_parameters.C, 1) = - state.x(3,1) + obj.input.scheme_parameters.d_zxf + obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1); 
             obj.b_zmp_constr(obj.input.scheme_parameters.C + 1 : 2 * obj.input.scheme_parameters.C, 1) = + state.x(3,1) + obj.input.scheme_parameters.d_zxb - obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1);                                 
