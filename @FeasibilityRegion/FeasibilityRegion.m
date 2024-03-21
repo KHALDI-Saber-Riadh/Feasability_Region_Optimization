@@ -1,27 +1,19 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Title: Feasability region Optimization
-% Author: Saber-Riadh KHALDI, forked from: Robust Gait Generation Framework
-% Author: Filippo M. Smaldone
+function d_zmp = FeasibilityRegion(L, l) 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-clc; clf; clear all; close all;
-
+global delta h Tc Tp TimeStep logs state plotter
 
 %% input data for the scheme
-L = 0.0;
-l = 0.068;
 input = struct;
 
 % parameters of the scheme
 input.scheme_parameters = struct;
-input.scheme_parameters.delta = 0.01; % sampling time
-input.scheme_parameters.h = 0.78; % CoM height for LIP model
+input.scheme_parameters.delta = delta; % sampling time
+input.scheme_parameters.h = h; % CoM height for LIP model
 input.scheme_parameters.g = 9.81; % gravity acceleration constant
 input.scheme_parameters.eta = sqrt(input.scheme_parameters.g / input.scheme_parameters.h);
-input.scheme_parameters.T_c = 0.7; % prediction horizon
-input.scheme_parameters.T_p = 2.5; % preview horizon
+input.scheme_parameters.T_c = Tc; % prediction horizon
+input.scheme_parameters.T_p = Tp; % preview horizon
 input.scheme_parameters.C = floor(input.scheme_parameters.T_c / input.scheme_parameters.delta);
 input.scheme_parameters.P = floor(input.scheme_parameters.T_p / input.scheme_parameters.delta);
 input.scheme_parameters.M = 2; % optimized footstep
@@ -63,7 +55,6 @@ input.kar.subregion_parameters = [input.scheme_parameters.d_ax, input.scheme_par
 
 
 %% footstep plan
-TimeStep = 1.2;
 input.footstep_plan = struct;
 input.footstep_plan.total_step_number = 18;
 input.footstep_plan.positions = zeros(input.footstep_plan.total_step_number + 4,3);
@@ -113,18 +104,6 @@ for i = 1 : input.footstep_plan.total_step_number + number_of_virtual_steps
      % keep all to zero
 
 end
-
-% trick: model the initial double support as a 
-% square centered between the feet
-%input.footstep_plan.positions(1, 2) = 0;
-
-% print the footstep plan
-disp('input.footstep_plan.positions - (x,y,z) [m]')
-disp(input.footstep_plan.positions)
-disp('input.footstep_plan.timings [s]')
-disp(input.footstep_plan.timings)
-
-
 
 %% simulation parameters
 simulation_parameters = struct;
@@ -251,10 +230,6 @@ for sim_iter = 1 : floor(simulation_parameters.sim_time / simulation_parameters.
             1;    
     end  
     
-    str = num2str( sim_iter / floor(simulation_parameters.sim_time / simulation_parameters.delta) * 100 );
-    str = strcat('simulation is at', " ", str, '%');
-    disp(str)
-    
 end
 %
 %
@@ -262,8 +237,18 @@ end
 %
 %% CONTROLLER & SIMULATION STOP OPERATING HERE
 
-%% plot the logs at a certain time 
-for t_k = 0.1:0.1:8.0
-    plotter.plotLogsAtTimeK(logs, state, floor(t_k / simulation_parameters.delta));
+zmp_x = logs.x_store(3,:);
+zmp_y = logs.y_store(3,:);
+
+com_x = logs.x_store(1,:);
+com_y = logs.x_store(1,:);
+
+diff_zmp_x = (abs(zmp_x(2:sim_iter)' - zmp_x(1:sim_iter-1)'));
+diff_zmp_y = (abs(zmp_y(2:sim_iter)' - zmp_y(1:sim_iter-1)'));
+d_zmp = 0;
+for i = 1:sim_iter - 1
+    d_zmp = d_zmp + norm([diff_zmp_x(i); diff_zmp_y(i)]);
 end
 
+
+end

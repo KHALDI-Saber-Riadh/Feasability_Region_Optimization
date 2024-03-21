@@ -5,15 +5,11 @@
 % Author: Filippo M. Smaldone
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-clc; clf; clear all; close all;
-
-
+clc ; clf ; close all; clear all;
 %% input data for the scheme
+input = struct;
 L = 0.087;
 l = 0.068;
-input = struct;
-
 % parameters of the scheme
 input.scheme_parameters = struct;
 input.scheme_parameters.delta = 0.01; % sampling time
@@ -63,7 +59,6 @@ input.kar.subregion_parameters = [input.scheme_parameters.d_ax, input.scheme_par
 
 
 %% footstep plan
-TimeStep = 1.2;
 input.footstep_plan = struct;
 input.footstep_plan.total_step_number = 18;
 input.footstep_plan.positions = zeros(input.footstep_plan.total_step_number + 4,3);
@@ -262,12 +257,9 @@ end
 %
 %% CONTROLLER & SIMULATION STOP OPERATING HERE
 
-zmp = logs.x_store(3,:);
-com = logs.x_store(1,:);
-
-sum(abs(zmp(2:end)' - zmp(1:end-1)'))
-%% plot the logs at a certain time 
+% plot the logs
 for t_k = 0.1:0.1:8.0
-    plotter.plotLogsAtTimeK(logs, state, floor(t_k / simulation_parameters.delta));
+    plotter.plotLogsAtTimeK(logs, state, floor(t_k / delta));
 end
+
 
