@@ -1,0 +1,3 @@
+function [dx, dy, dtheta] = footStepGen(Vx, Vy, omega)
+
+end

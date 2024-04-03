@@ -7,9 +7,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clc ; clf ; close all; clear all;
 %% input data for the scheme
+tic
 input = struct;
-L = 0.087;
-l = 0.068;
+L = 0.1419;
+l = 0.0450;
 % parameters of the scheme
 input.scheme_parameters = struct;
 input.scheme_parameters.delta = 0.01; % sampling time
@@ -46,6 +47,8 @@ input.scheme_parameters.ell_y_subsequent = 0.2; % kinematic admissible region y 
 input.scheme_parameters.footstep_weight_in_cost_function = 10; % 10 %1000000;
 input.scheme_parameters.zmp_track_in_cost_function = 0.01;
 input.scheme_parameters.v_max = 3;
+input.scheme_parameters.theta_max = 50 * pi /180;
+input.scheme_parameters.omega = (2 * pi / input.scheme_parameters.T_p) * ones(input.scheme_parameters.P, 1);
 
 
 %% handling non-convex constraints
@@ -59,13 +62,17 @@ input.kar.subregion_parameters = [input.scheme_parameters.d_ax, input.scheme_par
 
 
 %% footstep plan
+TimeStep = 1;
+number_of_virtual_steps = 1;
 input.footstep_plan = struct;
+Tp = 10;
+delta = 0.1;
+P = floor(Tp / delta);
+input.footstep_plan.input_velocity = [ones(P,1), zeros(P, 2)]; % vector of input velocity over the previeuw time Vx, Vy, omega
 input.footstep_plan.total_step_number = 18;
-input.footstep_plan.positions = zeros(input.footstep_plan.total_step_number + 4,3);
-input.toestep_plan.positions = zeros(input.footstep_plan.total_step_number + 4,3);
-input.footstep_plan.orientations = zeros(input.footstep_plan.total_step_number + 4,3);
-input.footstep_plan.timings = zeros(input.footstep_plan.total_step_number + 4,1);
-input.footstep_plan.running_steps = zeros(input.footstep_plan.total_step_number + 4,1);
+input.footstep_plan.positions = zeros(input.footstep_plan.total_step_number + number_of_virtual_steps ,3);
+input.footstep_plan.timings = zeros(input.footstep_plan.total_step_number + number_of_virtual_steps ,1);
+input.footstep_plan.running_steps = zeros(input.footstep_plan.total_step_number + number_of_virtual_steps ,1);
 input.footstep_plan.ds_duration = 0.3 * TimeStep; % it is convenient to set a fixed duration for the double support
                                        % this can still be modified by the Step Timing Adaptation module
 input.footstep_plan.dds_duration = 0.2 * TimeStep;                                       
@@ -77,27 +84,32 @@ input.footstep_plan.tail_y = zeros(input.scheme_parameters.P - input.scheme_para
 input.footstep_plan.zmp_centerline_x = zeros(input.scheme_parameters.C, 1);
 input.footstep_plan.zmp_centerline_y = zeros(input.scheme_parameters.C, 1);
 input.footstep_plan.mapping_buffer = zeros(2 * input.scheme_parameters.P, input.scheme_parameters.M + 1);
-input.sim_time = 10;
+input.footstep_plan.omega = (2 * pi / input.scheme_parameters.T_p) * ones(input.scheme_parameters.P, 1);
+
+input.sim_time = 8;
 
 % build a simple footstep plan in the world frame
-stride_length_x = 0.2;
-lateral_displacement_y = 0.09;
 
-number_of_virtual_steps = 4;
+stride_length_x = 0.2;
+lateral_displacement_y = 0.1;
+
+
 
 for i = 1 : input.footstep_plan.total_step_number + number_of_virtual_steps
      
    % footstep positions
    if i > 1
-       input.footstep_plan.positions(i, 1) = (i-2) * stride_length_x;
+    input.footstep_plan.positions(i, 1) = (i - 1) * stride_length_x;
    end
+%    if i > 1
+%        input.footstep_plan.positions(i, 1) = (i-2) * stride_length_x;
+%    end
    if input.footstep_plan.starting_sf == "right"
        input.footstep_plan.positions(i, 2) = (- 1) ^ (i) * lateral_displacement_y;
    else
        input.footstep_plan.positions(i, 2) = (- 1) ^ (i - 1) * lateral_displacement_y;
    end
    input.footstep_plan.positions(i, 3) = 0;
-
    % footstep orientations (not considering orientation for simplicity)
      % keep all to zero
 
@@ -108,7 +120,8 @@ for i = 1 : input.footstep_plan.total_step_number + number_of_virtual_steps
      % keep all to zero
 
 end
-
+input.footstep_plan.stepstimings = input.footstep_plan.timings(2:end) - input.footstep_plan.timings(1:end - 1);
+input.footstep_plan.sf_pos = input.footstep_plan.positions(1, 1:3)'; % position of the current support foot
 % trick: model the initial double support as a 
 % square centered between the feet
 %input.footstep_plan.positions(1, 2) = 0;
@@ -130,7 +143,10 @@ simulation_parameters.sim_type = 'basic_test'; %leg_crossing'; % 'basic_test', '
 simulation_parameters.obstacle_number = 1;
 simulation_parameters.obstacles = [0.6 -0.09 0.05 0.05]; % x,y, size_x, size_y
 
-
+FSG = FootStepGenerator(input, simulation_parameters);
+FSG.compute_plan();
+Timing = FSG.GetFootStepTiming();
+Plan = FSG.GetFootStepPlan();
 %% state data 
 state = struct;
 state.x = zeros(3,1);
@@ -195,30 +211,7 @@ for sim_iter = 1 : floor(simulation_parameters.sim_time / simulation_parameters.
 
     % update iteration
     simulation_parameters.sim_iter = sim_iter;
-
-    % get measurement (simulate pertuebations)
-    state.x(2, 1) = state.x(2, 1) + input.scheme_parameters.delta * (0.15 + 0.1 * sin(2*pi*sim_iter*0.01/3)) ;
-    state.y(2, 1) = state.y(2, 1) + input.scheme_parameters.delta * (0.15 + 0.1 * sin(2*pi*sim_iter*0.01/5)) ;    
-    
-    % disturbance and simple STA
-    if strcmp(simulation_parameters.sim_type, 'basic_test')
-        if sim_iter >= 230 && sim_iter < 240
-            state.x(2, 1) = state.x(2, 1) + input.scheme_parameters.delta * 2.8 ;
-            state.y(2, 1) = state.y(2, 1) - input.scheme_parameters.delta * 3.5 ;
-        end
-    end
-    if strcmp(simulation_parameters.sim_type, 'leg_crossing')
-        if sim_iter >= 230 && sim_iter < 240
-            state.x(2, 1) = state.x(2, 1) + input.scheme_parameters.delta * 2.5 ;
-            state.y(2, 1) = state.y(2, 1) + input.scheme_parameters.delta * 1.5 ;
-        end
-    end
-    if strcmp(simulation_parameters.sim_type, 'obstacle')
-        if sim_iter >= 330 && sim_iter < 340
-            state.x(2, 1) = state.x(2, 1) + input.scheme_parameters.delta * 2 ;
-            state.y(2, 1) = state.y(2, 1) + input.scheme_parameters.delta * 2 ;
-        end
-    end    
+ 
     % solve step of gait generation algorithm
     state = wpg.update(state);
     state.sim_iter = sim_iter;
@@ -256,10 +249,10 @@ end
 %
 %
 %% CONTROLLER & SIMULATION STOP OPERATING HERE
-
+toc
 % plot the logs
 for t_k = 0.1:0.1:8.0
-    plotter.plotLogsAtTimeK(logs, state, floor(t_k / delta));
+    plotter.plotLogsAtTimeK(logs, state, floor(t_k / input.scheme_parameters.delta));
 end
 
 

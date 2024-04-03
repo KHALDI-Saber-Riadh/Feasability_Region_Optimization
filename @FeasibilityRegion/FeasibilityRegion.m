@@ -180,29 +180,6 @@ for sim_iter = 1 : floor(simulation_parameters.sim_time / simulation_parameters.
     % update iteration
     simulation_parameters.sim_iter = sim_iter;
 
-    % get measurement (simulate pertuebations)
-    state.x(2, 1) = state.x(2, 1) + input.scheme_parameters.delta * (0.15 + 0.1 * sin(2*pi*sim_iter*0.01/3)) ;
-    state.y(2, 1) = state.y(2, 1) + input.scheme_parameters.delta * (0.15 + 0.1 * sin(2*pi*sim_iter*0.01/5)) ;    
-    
-    % disturbance and simple STA
-    if strcmp(simulation_parameters.sim_type, 'basic_test')
-        if sim_iter >= 230 && sim_iter < 240
-            state.x(2, 1) = state.x(2, 1) + input.scheme_parameters.delta * 2.8 ;
-            state.y(2, 1) = state.y(2, 1) - input.scheme_parameters.delta * 3.5 ;
-        end
-    end
-    if strcmp(simulation_parameters.sim_type, 'leg_crossing')
-        if sim_iter >= 230 && sim_iter < 240
-            state.x(2, 1) = state.x(2, 1) + input.scheme_parameters.delta * 2.5 ;
-            state.y(2, 1) = state.y(2, 1) + input.scheme_parameters.delta * 1.5 ;
-        end
-    end
-    if strcmp(simulation_parameters.sim_type, 'obstacle')
-        if sim_iter >= 330 && sim_iter < 340
-            state.x(2, 1) = state.x(2, 1) + input.scheme_parameters.delta * 2 ;
-            state.y(2, 1) = state.y(2, 1) + input.scheme_parameters.delta * 2 ;
-        end
-    end    
     % solve step of gait generation algorithm
     state = wpg.update(state);
     state.sim_iter = sim_iter;
