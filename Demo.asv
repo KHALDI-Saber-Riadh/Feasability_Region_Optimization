@@ -62,13 +62,27 @@ input.kar.subregion_parameters = [input.scheme_parameters.d_ax, input.scheme_par
 
 
 %% footstep plan
-TimeStep = 1.2;
+TimeStep = 1;
+number_of_virtual_steps = 1;
 input.footstep_plan = struct;
-input.footstep_plan.input_velocity = zeros(input.scheme_parameters.P, 3); % vector of input velocity over the previeuw time Vx, Vy, omega
+input.footstep_plan.Tp = 20;
+input.footstep_plan.delta = 0.1;
+P = floor(input.footstep_plan.Tp / input.footstep_plan.delta);
+
+theta = linspace(0, 3 * pi / 4, 200);
+omega = 0.1 * ones(P,1);
+radius = 1;
+Vx = - omega * radius * sin(theta);
+Vy = omega * radius * cos(theta);
+velocity = [Vx, Vy, omega];
+input.footstep_plan.input_velocity
+velocity = [0., 0.1, 0.1];
+input.footstep_plan.input_velocity = [velocity(1) * ones(P,1), velocity(2) * ones(P,1), velocity(3) * ones(P,1)]; % vector of input velocity over the previeuw time Vx, Vy, omega
+
 input.footstep_plan.total_step_number = 18;
-input.footstep_plan.positions = zeros(input.footstep_plan.total_step_number + 4,3);
-input.footstep_plan.timings = zeros(input.footstep_plan.total_step_number + 4,1);
-input.footstep_plan.running_steps = zeros(input.footstep_plan.total_step_number + 4,1);
+input.footstep_plan.positions = zeros(input.footstep_plan.total_step_number + number_of_virtual_steps ,3);
+input.footstep_plan.timings = zeros(P ,1);
+input.footstep_plan.running_steps = zeros(input.footstep_plan.total_step_number + number_of_virtual_steps ,1);
 input.footstep_plan.ds_duration = 0.3 * TimeStep; % it is convenient to set a fixed duration for the double support
                                        % this can still be modified by the Step Timing Adaptation module
 input.footstep_plan.dds_duration = 0.2 * TimeStep;                                       
@@ -84,46 +98,28 @@ input.footstep_plan.omega = (2 * pi / input.scheme_parameters.T_p) * ones(input.
 
 input.sim_time = 8;
 
-% build a simple footstep plan in the world frame
-
-stride_length_x = 0.2;
-lateral_displacement_y = 0.1;
-
-number_of_virtual_steps = 4;
-
-for i = 1 : input.footstep_plan.total_step_number + number_of_virtual_steps
-     
-   % footstep positions
-   if i > 1
-       input.footstep_plan.positions(i, 1) = (i-2) * stride_length_x;
-   end
-   if input.footstep_plan.starting_sf == "right"
-       input.footstep_plan.positions(i, 2) = (- 1) ^ (i) * lateral_displacement_y;
-   else
-       input.footstep_plan.positions(i, 2) = (- 1) ^ (i - 1) * lateral_displacement_y;
-   end
-   input.footstep_plan.positions(i, 3) = 0;
-   % footstep orientations (not considering orientation for simplicity)
-     % keep all to zero
-
-   % timings
-   input.footstep_plan.timings(i, 1) = TimeStep *  (i - 1);
-
-   % mapping to define the running steps (not considering flight phases here)
-     % keep all to zero
-
+for i = 1 : P
+   input.footstep_plan.timings(i, 1) = TimeStep *  (i);
 end
 input.footstep_plan.stepstimings = input.footstep_plan.timings(2:end) - input.footstep_plan.timings(1:end - 1);
-input.footstep_plan.sf_pos = input.footstep_plan.positions(1, 1:3)'; % position of the current support foot
+input.footstep_plan.sf_pos = [0; -0.1; 0]; % position of the current support foot
+
+input.footstep_plan.positions = [];
+FSG = FootStepGenerator(input);
+input.footstep_plan.positions = FSG.GetPTraj();
+% FSG.compute_plan();
+% Timing = FSG.GetFootStepTiming();
+% input.footstep_plan.positions = [[0, 0.1, 0]; [0, -0.1, 0]; FSG.GetFootStepPlan()];
+
 % trick: model the initial double support as a 
 % square centered between the feet
 %input.footstep_plan.positions(1, 2) = 0;
 
 % print the footstep plan
-disp('input.footstep_plan.positions - (x,y,z) [m]')
+disp('input.footstep_plan.positions - (x,y,theta) [m, rad]')
 disp(input.footstep_plan.positions)
-disp('input.footstep_plan.timings [s]')
-disp(input.footstep_plan.timings)
+% disp('input.footstep_plan.timings [s]')
+% disp(input.footstep_plan.timings)
 
 
 
@@ -135,17 +131,13 @@ simulation_parameters.sim_iter = 1;
 simulation_parameters.sim_type = 'basic_test'; %leg_crossing'; % 'basic_test', 'leg_crossing', 'obstacle'
 simulation_parameters.obstacle_number = 1;
 simulation_parameters.obstacles = [0.6 -0.09 0.05 0.05]; % x,y, size_x, size_y
-
-FSG = FootStepGenerator(input, simulation_parameters);
-FSG.compute_plan();
-Plan
 %% state data 
 state = struct;
 state.x = zeros(3,1);
 state.y = zeros(3,1);
 state.w_bar = zeros(2,1);
-state.sf_pos = input.footstep_plan.positions(1, 1:3)'; % position of the current support foot
-state.sf_pos_ss  = input.footstep_plan.positions(1, 1:3)';
+state.sf_pos = input.footstep_plan.sf_pos; % position of the current support foot
+state.sf_pos_ss  = input.footstep_plan.sf_pos';
 state.next_sf_pos = zeros(3,1);
 state.next_sf_pos_ss = zeros(3,1);
 state.current_sf = input.footstep_plan.starting_sf;
@@ -175,7 +167,7 @@ logs.feasibility_region_full_logs = zeros(8, floor(simulation_parameters.sim_tim
 %% initialize plotter
 plotter = Plotter(logs, input, simulation_parameters);
 
-
+plotter.plotPlan();
 %% CONTROLLER & SIMULATION START OPERATING HERE:
 %
 %

@@ -314,6 +314,7 @@ classdef FootStepGenerator < handle
                 k_start = N(1);
             end
             for i = k_start:min(k_end, length(obj.v_inputs_))
+                
                output(3) = output(3) + obj.v_inputs_(i, 3) * obj.delta_;
                R = rotz(rad2deg(output(3)));
                output(1:2) = output(1:2) + R(1:2,1:2) * obj.v_inputs_(i, 1:2)' * obj.delta_;
