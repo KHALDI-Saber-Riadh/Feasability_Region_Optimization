@@ -196,6 +196,7 @@ for sim_iter = 1 : floor(simulation_parameters.sim_time / simulation_parameters.
     logs.x_store(:, sim_iter) = state.x;
     logs.y_store(:, sim_iter) = state.y;
     logs.w_bar(:, simulation_parameters.sim_iter) = wpg.getDisturbance();
+    state.sf_pos
     logs.actual_footsteps(:, state.footstep_counter) = state.sf_pos;
     logs.feasibility_region(:, sim_iter) = state.feasibility_region(:, 1);
     

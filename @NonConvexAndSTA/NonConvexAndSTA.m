@@ -323,6 +323,17 @@ classdef NonConvexAndSTA < FeasibilityDrivenBase & handle
                x_u_M_bar = obj.linear_feasibility_region.a_x_M * obj.Delta_lambda + obj.linear_feasibility_region.b_x_M;
                y_u_m_bar = obj.linear_feasibility_region.a_y_m * obj.Delta_lambda + obj.linear_feasibility_region.b_y_m;
                y_u_M_bar = obj.linear_feasibility_region.a_y_M * obj.Delta_lambda + obj.linear_feasibility_region.b_y_M;
+               R = rotz(rad2deg(state.sf_pos(3,1))); R = R(1:2, 1:2);
+               rotated_coord = R * [x_u_m, x_u_M, x_u_m_bar, x_u_M_bar; y_u_m, y_u_M, y_u_m_bar, y_u_M_bar];
+               x_u_m = rotated_coord(1,1);
+               x_u_M = rotated_coord(1,2);
+               x_u_m_bar = rotated_coord(1,3);
+               x_u_M_bar = rotated_coord(1,4);
+               y_u_m = rotated_coord(2,1);
+               y_u_M = rotated_coord(2,2);
+               y_u_m_bar = rotated_coord(2,3);
+               y_u_M_bar = rotated_coord(2,4);
+               
                obj.feasibility_region(:, i) = [x_u_m; x_u_M; y_u_m; y_u_M; x_u_m_bar; x_u_M_bar; y_u_m_bar; y_u_M_bar];   
                
            end

@@ -127,6 +127,14 @@ classdef StandardMode < FeasibilityDrivenBase & handle
             obj.y_u_M = obj.centerline_multiplier * (obj.input.footstep_plan.zmp_centerline_y + obj.input.scheme_parameters.d_zy/2 - obj.restriction_y) ...
                         + obj.tail_multiplier * obj.input.footstep_plan.tail_y ...
                         - state.w_bar(2,1) / obj.input.scheme_parameters.eta ^ 2;  
+                    
+            R = rotz(rad2deg(state.sf_pos(3,1))); R = R(1:2, 1:2);
+            rotated_coord = R * [obj.x_u_m, obj.x_u_M; obj.y_u_m, obj.y_u_M];
+            obj.x_u_m = rotated_coord(1,1);
+            obj.x_u_M = rotated_coord(1,2);
+            obj.y_u_m = rotated_coord(2,1);
+            obj.y_u_M = rotated_coord(2,2);
+            
             obj.feasibility_region(:, 1) = [obj.x_u_m; obj.x_u_M; obj.y_u_m; obj.y_u_M; 0; 0; 0; 0];
             
         end

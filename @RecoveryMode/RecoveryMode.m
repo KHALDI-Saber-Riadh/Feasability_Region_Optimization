@@ -107,8 +107,8 @@ classdef RecoveryMode < FeasibilityDrivenBase & handle
             obj.b_kinematic_constr = [obj.kin_multiplier * state.sf_pos_ss(1,1) + obj.kin_constr_buffer; ...
                                       - obj.kin_multiplier * state.sf_pos_ss(1,1) + obj.kin_constr_buffer];
              
-            obj.b_zmp_constr_toe(1 : obj.input.scheme_parameters.C, 1) = - state.x(3,1) + obj.input.scheme_parameters.d_zt / 2 + obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1) + obj.input.footstep_plan.mapping(:, 1) * obj.input.scheme_parameters.dist_toe; 
-            obj.b_zmp_constr_toe(obj.input.scheme_parameters.C + 1 : 2 * obj.input.scheme_parameters.C, 1) = + state.x(3,1) + obj.input.scheme_parameters.d_zt / 2 - obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1) -  obj.input.footstep_plan.mapping(:, 1) * obj.input.scheme_parameters.dist_toe;                                
+            obj.b_zmp_constr_toe(1 : obj.input.scheme_parameters.C, 1) = - state.x(3,1) + obj.input.scheme_parameters.d_zt / 2 + obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1) + obj.input.footstep_plan.mapping(:, 1) * obj.input.scheme_parameters.dist_toe * cos(state.sf_pos_ss(3,1)); 
+            obj.b_zmp_constr_toe(obj.input.scheme_parameters.C + 1 : 2 * obj.input.scheme_parameters.C, 1) = + state.x(3,1) + obj.input.scheme_parameters.d_zt / 2 - obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1) -  obj.input.footstep_plan.mapping(:, 1) * obj.input.scheme_parameters.dist_toe * cos(state.sf_pos_ss(3,1));                                 
             
             obj.b_zmp_constr(1 : obj.input.scheme_parameters.C, 1) = - state.x(3,1) + obj.input.scheme_parameters.d_zxf + obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1); 
             obj.b_zmp_constr(obj.input.scheme_parameters.C + 1 : 2 * obj.input.scheme_parameters.C, 1) = + state.x(3,1) + obj.input.scheme_parameters.d_zxb - obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(1,1);                                 
@@ -174,7 +174,10 @@ classdef RecoveryMode < FeasibilityDrivenBase & handle
 
             obj.b_zmp_constr(1 : obj.input.scheme_parameters.C, 1) = - state.y(3,1) + obj.input.scheme_parameters.d_zy / 2 + obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(2,1); 
             obj.b_zmp_constr(obj.input.scheme_parameters.C + 1 : 2 * obj.input.scheme_parameters.C, 1) = + state.y(3,1) + obj.input.scheme_parameters.d_zy / 2 - obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(2,1);                                                 
-          
+            
+            obj.b_zmp_constr_toe(1 : obj.input.scheme_parameters.C, 1) = - state.y(3,1) + obj.input.scheme_parameters.d_zy / 2 + obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(2,1) + obj.input.footstep_plan.mapping(:, 1) * obj.input.scheme_parameters.dist_toe * sin(state.sf_pos_ss(3,1)); 
+            obj.b_zmp_constr_toe(obj.input.scheme_parameters.C + 1 : 2 * obj.input.scheme_parameters.C, 1) = + state.y(3,1) + obj.input.scheme_parameters.d_zy / 2 - obj.input.footstep_plan.mapping(:, 1) * state.sf_pos_ss(2,1) - obj.input.footstep_plan.mapping(:, 1) * obj.input.scheme_parameters.dist_toe * sin(state.sf_pos_ss(3,1));                                                 
+
             obj.f(obj.input.scheme_parameters.C+1 : obj.input.scheme_parameters.C + obj.input.scheme_parameters.M, 1) = ...
                     - obj.footstep_weight * obj.input.footstep_plan.positions(state.footstep_counter_rm : state.footstep_counter_rm + obj.input.scheme_parameters.M - 1, 2);
 
@@ -190,7 +193,13 @@ classdef RecoveryMode < FeasibilityDrivenBase & handle
                obj.b_eq_ds(1,1) = obj.b_stab_constr;
                obj.b_eq_ds(2,1) = obj.input.footstep_plan.positions(state.footstep_counter_rm, 2);    
                solution = quadprog(obj.H, obj.f, obj.A_ineq, obj.b_ineq, obj.A_eq_ds, obj.b_eq_ds, [], [], [], obj.options);
-             else
+             elseif (obj.index <= obj.input.footstep_plan.ds_samples + obj.input.footstep_plan.dds_samples) && (obj.index > obj.input.footstep_plan.ds_samples)
+               obj.A_ineq = [obj.A_zmp_constr_toe];
+               obj.b_ineq = [obj.b_zmp_constr_toe];                
+               obj.A_eq_ss = obj.A_stab_constr;   
+               obj.b_eq_ss = obj.b_stab_constr;             
+               solution = quadprog(obj.H, obj.f, obj.A_ineq, obj.b_ineq, obj.A_eq_ss, obj.b_eq_ss, [], [], [], obj.options);  
+            else
                obj.A_ineq = [obj.A_zmp_constr; obj.A_kinematic_constr];
                obj.b_ineq = [obj.b_zmp_constr; obj.b_kinematic_constr];                 
                obj.A_eq_ss = obj.A_stab_constr;   
@@ -207,7 +216,7 @@ classdef RecoveryMode < FeasibilityDrivenBase & handle
             end            
             u(2,1) = solution(1);
             ftstp(2,1) = solution(obj.input.scheme_parameters.C + 1,1);
-            ftstp(3,1) = 0;
+            ftstp(3,1) = state.sf_pos(3,1);
             obj.previous_ftstp = ftstp; 
             
         end
@@ -230,7 +239,14 @@ classdef RecoveryMode < FeasibilityDrivenBase & handle
                         - state.w_bar(2,1) / obj.input.scheme_parameters.eta ^ 2; 
             obj.y_u_M = obj.centerline_multiplier * (obj.input.footstep_plan.zmp_centerline_y + obj.input.scheme_parameters.d_zy/2 - obj.restriction_y) ...
                         + obj.tail_multiplier * obj.input.footstep_plan.tail_y ...
-                        - state.w_bar(2,1) / obj.input.scheme_parameters.eta ^ 2;  
+                        - state.w_bar(2,1) / obj.input.scheme_parameters.eta ^ 2;
+            R = rotz(rad2deg(state.sf_pos(3,1))); R = R(1:2, 1:2);
+            rotated_coord = R * [obj.x_u_m, obj.x_u_M; obj.y_u_m, obj.y_u_M];
+            obj.x_u_m = rotated_coord(1,1);
+            obj.x_u_M = rotated_coord(1,2);
+            obj.y_u_m = rotated_coord(2,1);
+            obj.y_u_M = rotated_coord(2,2);
+
             obj.feasibility_region(:, 1) = [obj.x_u_m; obj.x_u_M; obj.y_u_m; obj.y_u_M; 0; 0; 0; 0];
             
         end

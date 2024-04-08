@@ -148,7 +148,7 @@ classdef Plotter < handle
                     rot_rectangle_toe = R(1:2, 1:2) * obj.rectangle_toe;
                     
                     c = plot(rot_rectangle(1,:) + logs.actual_footsteps(1,i), rot_rectangle(2,:) + logs.actual_footsteps(2,i), 'm','Linewidth',2, 'Handlevisibility', 'off');
-                    c_toe = plot(rot_rectangle_toe(1,:) + center_toe(1) + obj.dist_toe, rot_rectangle_toe(2,:) +center_toe(2), 'm','Linewidth',2, 'Handlevisibility', 'off');
+                    c_toe = plot(rot_rectangle_toe(1,:) + center_toe(1), rot_rectangle_toe(2,:) + center_toe(2), 'm','Linewidth',2, 'Handlevisibility', 'off');
                     c_link = plot(logs.actual_footsteps(1,i), logs.actual_footsteps(2,i), 'ko','MarkerSize',8, 'MarkerFaceColor', 'k');
                 end
             end
@@ -276,7 +276,7 @@ classdef Plotter < handle
                     rot_rectangle_toe = R(1:2, 1:2) * obj.rectangle_toe;
                     
                     c = plot(rot_rectangle(1,:) + obj.plan_(1,i), rot_rectangle(2,:) + obj.plan_(2,i), 'm','Linewidth',2, 'Handlevisibility', 'off');
-                    c_toe = plot( rot_rectangle_toe(1,:) +  center_toe(1) , rot_rectangle_toe(2,:) + center_toe(2), 'r','Linewidth',2, 'Handlevisibility', 'off');
+                    c_toe = plot( rot_rectangle_toe(1,:) +  center_toe(1) , rot_rectangle_toe(2,:) + center_toe(2), 'm','Linewidth',2, 'Handlevisibility', 'off');
                     c_link = plot(obj.plan_(1,i), obj.plan_(2,i), 'ko','MarkerSize',8, 'MarkerFaceColor', 'k');
                end
            end
