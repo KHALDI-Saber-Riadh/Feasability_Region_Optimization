@@ -1,7 +1,7 @@
 
 function d_zmp = FeasibilityRegion(L, l) 
 
-global delta h Tc Tp TimeStep logs state plotter
+global delta h Tc Tp TimeStep logs state plotter V_input T_sim
 
 %% input data for the scheme
 input = struct;
@@ -55,13 +55,19 @@ input.kar.subregion_parameters = [input.scheme_parameters.d_ax, input.scheme_par
 
 
 %% footstep plan
+number_of_virtual_steps = 1;
 input.footstep_plan = struct;
+input.footstep_plan.Tp = 20;
+input.footstep_plan.delta = 0.1;
+P = floor(input.footstep_plan.Tp / input.footstep_plan.delta);
+
+velocity = V_input;
+input.footstep_plan.input_velocity = [velocity(1) * ones(P,1), velocity(2) * ones(P,1), velocity(3) * ones(P,1)]; % vector of input velocity over the previeuw time Vx, Vy, omega
+
 input.footstep_plan.total_step_number = 18;
-input.footstep_plan.positions = zeros(input.footstep_plan.total_step_number + 4,3);
-input.toestep_plan.positions = zeros(input.footstep_plan.total_step_number + 4,3);
-input.footstep_plan.orientations = zeros(input.footstep_plan.total_step_number + 4,3);
-input.footstep_plan.timings = zeros(input.footstep_plan.total_step_number + 4,1);
-input.footstep_plan.running_steps = zeros(input.footstep_plan.total_step_number + 4,1);
+input.footstep_plan.positions = zeros(input.footstep_plan.total_step_number + number_of_virtual_steps ,3);
+input.footstep_plan.timings = zeros(P ,1);
+input.footstep_plan.running_steps = zeros(input.footstep_plan.total_step_number + number_of_virtual_steps ,1);
 input.footstep_plan.ds_duration = 0.3 * TimeStep; % it is convenient to set a fixed duration for the double support
                                        % this can still be modified by the Step Timing Adaptation module
 input.footstep_plan.dds_duration = 0.2 * TimeStep;                                       
@@ -73,42 +79,39 @@ input.footstep_plan.tail_y = zeros(input.scheme_parameters.P - input.scheme_para
 input.footstep_plan.zmp_centerline_x = zeros(input.scheme_parameters.C, 1);
 input.footstep_plan.zmp_centerline_y = zeros(input.scheme_parameters.C, 1);
 input.footstep_plan.mapping_buffer = zeros(2 * input.scheme_parameters.P, input.scheme_parameters.M + 1);
-input.sim_time = 10;
+input.footstep_plan.omega = (2 * pi / input.scheme_parameters.T_p) * ones(input.scheme_parameters.P, 1);
 
-% build a simple footstep plan in the world frame
-stride_length_x = 0.2;
-lateral_displacement_y = 0.09;
+input.sim_time = T_sim;
 
-number_of_virtual_steps = 4;
-
-for i = 1 : input.footstep_plan.total_step_number + number_of_virtual_steps
-     
-   % footstep positions
-   if i > 1
-       input.footstep_plan.positions(i, 1) = (i-2) * stride_length_x;
-   end
-   if input.footstep_plan.starting_sf == "right"
-       input.footstep_plan.positions(i, 2) = (- 1) ^ (i) * lateral_displacement_y;
-   else
-       input.footstep_plan.positions(i, 2) = (- 1) ^ (i - 1) * lateral_displacement_y;
-   end
-   input.footstep_plan.positions(i, 3) = 0;
-
-   % footstep orientations (not considering orientation for simplicity)
-     % keep all to zero
-
-   % timings
-   input.footstep_plan.timings(i, 1) = TimeStep *  (i - 1);
-
-   % mapping to define the running steps (not considering flight phases here)
-     % keep all to zero
-
+for i = 1 : P
+   input.footstep_plan.timings(i, 1) = TimeStep *  (i-1);
 end
+input.footstep_plan.stepstimings = input.footstep_plan.timings(2:end) - input.footstep_plan.timings(1:end - 1);
+input.footstep_plan.sf_pos = [0; -0.1; 0]; % position of the current support foot
+
+input.footstep_plan.positions = [];
+FSG = FootStepGenerator(input);
+FSG.compute_plan();
+Timing = FSG.GetFootStepTiming();
+input.footstep_plan.positions = [[0, -0.1, 0]; FSG.GetFootStepPlan()];
+
+% trick: model the initial double support as a 
+% square centered between the feet
+%input.footstep_plan.positions(1, 2) = 0;
+
+% print the footstep plan
+disp('input.footstep_plan.positions - (x,y,theta) [m, rad]')
+disp(input.footstep_plan.positions)
+% disp('input.footstep_plan.timings [s]')
+% disp(input.footstep_plan.timings)
+
+
+
 
 %% simulation parameters
 simulation_parameters = struct;
 simulation_parameters.delta = input.scheme_parameters.delta; %TODO: enable different operating frequencies
-simulation_parameters.sim_time = 8;
+simulation_parameters.sim_time = T_sim;
 simulation_parameters.sim_iter = 1;
 simulation_parameters.sim_type = 'basic_test'; %leg_crossing'; % 'basic_test', 'leg_crossing', 'obstacle'
 simulation_parameters.obstacle_number = 1;

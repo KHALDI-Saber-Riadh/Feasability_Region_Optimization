@@ -6,7 +6,9 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clc ; clf ; close all; clear all;
-global delta h Tc Tp TimeStep logs state plotter
+global delta h Tc Tp TimeStep logs state plotter V_input T_sim
+T_sim = 8.0;
+V_input = [0.1, 0., 0.];
 delta = 0.01;
 h = 0.78;
 Tc = 0.7; 
@@ -60,6 +62,6 @@ nonlcon = [];
 x_opt = ga(Cost, nvars, A, B, Aeq, beq, lb, ub, nonlcon, options);
 % plot the logs
 % figure(2)
-% for t_k = 0.1:0.1:8.0
-%     plotter.plotLogsAtTimeK(logs, state, floor(t_k / delta));
-% end
+for t_k = 0.1:0.1:T_sim
+    plotter.plotLogsAtTimeK(logs, state, floor(t_k / delta));
+end
