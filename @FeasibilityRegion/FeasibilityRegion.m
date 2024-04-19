@@ -1,6 +1,7 @@
 
 function d_zmp = FeasibilityRegion(L, l) 
-
+L
+l
 global delta h Tc Tp TimeStep logs state plotter V_input T_sim
 
 %% input data for the scheme
@@ -100,8 +101,8 @@ input.footstep_plan.positions = [[0, -0.1, 0]; FSG.GetFootStepPlan()];
 %input.footstep_plan.positions(1, 2) = 0;
 
 % print the footstep plan
-disp('input.footstep_plan.positions - (x,y,theta) [m, rad]')
-disp(input.footstep_plan.positions)
+% disp('input.footstep_plan.positions - (x,y,theta) [m, rad]')
+% disp(input.footstep_plan.positions)
 % disp('input.footstep_plan.timings [s]')
 % disp(input.footstep_plan.timings)
 

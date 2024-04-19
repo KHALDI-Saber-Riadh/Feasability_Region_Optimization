@@ -9,8 +9,8 @@ clc ; clf ; close all; clear all;
 %% input data for the scheme
 tic
 input = struct;
-L = 0.1419;
-l = 0.0450;
+L = 0.1411;
+l = 0.0368;
 % parameters of the scheme
 input.scheme_parameters = struct;
 input.scheme_parameters.delta = 0.01; % sampling time
@@ -31,7 +31,7 @@ input.scheme_parameters.mi_max = 0.000025;
 input.scheme_parameters.gamma_max = 0.00099;
 input.scheme_parameters.epsilon = 0.0005;
 input.scheme_parameters.d_zxf = L; % support polygon square width
-input.scheme_parameters.d_zxb = 0.225 - L - l;
+input.scheme_parameters.d_zxb = 0.224 - L - l;
 input.scheme_parameters.d_zt = l;
 input.scheme_parameters.d_zy = 0.13;
 input.scheme_parameters.d_ax = 0.5; % kinematic admissible region x dimension
@@ -69,7 +69,7 @@ input.footstep_plan.Tp = 20;
 input.footstep_plan.delta = 0.1;
 P = floor(input.footstep_plan.Tp / input.footstep_plan.delta);
 
-velocity = [0.1, 0., 0.1];
+velocity = [0.1, 0., 0.];
 input.footstep_plan.input_velocity = [velocity(1) * ones(P,1), velocity(2) * ones(P,1), velocity(3) * ones(P,1)]; % vector of input velocity over the previeuw time Vx, Vy, omega
 
 input.footstep_plan.total_step_number = 18;
@@ -196,7 +196,6 @@ for sim_iter = 1 : floor(simulation_parameters.sim_time / simulation_parameters.
     logs.x_store(:, sim_iter) = state.x;
     logs.y_store(:, sim_iter) = state.y;
     logs.w_bar(:, simulation_parameters.sim_iter) = wpg.getDisturbance();
-    state.sf_pos
     logs.actual_footsteps(:, state.footstep_counter) = state.sf_pos;
     logs.feasibility_region(:, sim_iter) = state.feasibility_region(:, 1);
     
@@ -232,4 +231,15 @@ for t_k = 0.1:0.1:8.0
     plotter.plotLogsAtTimeK(logs, state, floor(t_k / input.scheme_parameters.delta));
 end
 
+zmp_x = logs.x_store(3,:);
+zmp_y = logs.y_store(3,:);
 
+com_x = logs.x_store(1,:);
+com_y = logs.x_store(1,:);
+
+diff_zmp_x = (abs(zmp_x(2:sim_iter)' - zmp_x(1:sim_iter-1)'));
+diff_zmp_y = (abs(zmp_y(2:sim_iter)' - zmp_y(1:sim_iter-1)'));
+d_zmp = 0;
+for i = 1:sim_iter - 1
+    d_zmp = d_zmp + norm([diff_zmp_x(i); diff_zmp_y(i)]);
+end

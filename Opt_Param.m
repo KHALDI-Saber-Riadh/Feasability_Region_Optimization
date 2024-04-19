@@ -13,10 +13,11 @@ delta = 0.01;
 h = 0.78;
 Tc = 0.7; 
 Tp = 2.5;
-TimeStep = 1.2;
+TimeStep = 1;
 Ltot = 0.225; % total lenght of the sole 
 L_dx = 0.039; % minimum distance from the heel edges
 l_bound = [0; 0.3 * Ltot];
+LogReader;
 %%%% Visualize the whole to know what type of optim to use 
 % N = 10;
 % l = linspace(l_bound(1), l_bound(2),N);
@@ -45,7 +46,7 @@ l_bound = [0; 0.3 * Ltot];
 % title('Plot de (l, L, d_{zmp})');
 %%%%%
 
-options = optimoptions('ga', 'Display', 'off',...
+options = optimoptions('ga', 'Display', 'iter',...
                        'PopulationSize', 10, ...
                        'MaxGenerations', 15, ...
                        'MaxStallGenerations', 5);
@@ -53,13 +54,14 @@ Cost = @(x) FeasibilityRegion(x(1), x(2));
 rng default  % For reproducibility
 nvars = 2;
 A = [0 -1;       0  1; -1 0;         1 1];
-B = [ - 0.1 * Ltot  ; 0.3 * Ltot; L_dx; Ltot - L_dx]; 
+B = [ - 0.1 * Ltot  ; 0.3 * Ltot; -L_dx; Ltot - L_dx]; 
 Aeq = [];
 beq = [];
 lb = [];
 ub = [];
 nonlcon = [];
 x_opt = ga(Cost, nvars, A, B, Aeq, beq, lb, ub, nonlcon, options);
+f_opt = Cost(x_opt);
 % plot the logs
 % figure(2)
 for t_k = 0.1:0.1:T_sim
